@@ -25,7 +25,7 @@ alpha=((n*w**(2/3))/s**0.5)**beta
 delta_t=360
 end_time=8514000
 #setup
-
+#lets see if this works
 
 time2d=(np.arange(0,end_time,delta_t))
 Qboun2d=(1-np.cos((time2d*np.pi)/450))*(750/np.pi)+200 #np.atleast_2d
