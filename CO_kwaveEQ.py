@@ -25,33 +25,32 @@ alpha=((n*w**(2/3))/s**0.5)**beta
 delta_t=360
 end_time=8514000
 #setup
-#lets see if this works
+
 
 time2d=(np.arange(0,end_time,delta_t))
 Qboun2d=(1-np.cos((time2d*np.pi)/450))*(750/np.pi)+200 #np.atleast_2d
-Qx=np.ones(( len(time2d),len(x)+2),dtype=float) 
-Qout_CO=np.concatenate((time2d[:,None],Qboun2d[:,None]) axis=1)
-np.concatenate(Qout_CO, Qx)
-#Qout_Chap=np.concatenate((time2d[:,None],Qboun2d[:,None],Qx), axis=0)
+Qx=np.ones((len(time2d),len(x)+2),dtype=float) 
+Qout_CO=np.concatenate((time2d[:,None],Qboun2d[:,None],Qx), axis=1)
+Qout_Chap=np.concatenate((time2d[:,None],Qboun2d[:,None],Qx), axis=1)
 tt=[]
 
 
-for i in np.arange(x.count()):
+for i in range(x.count()):
     init_time=0
-    for j in range(len(time2d)):
-        this_time = Qout_CO[0][j]
+    for j in range(len(time2d)-1):
+        this_time = Qout_CO[j][0]
         dt=this_time - init_time
-        Qout_CO[i+2][j+1]=(delta_t/x[i]*Qout_CO[i+1][j+1] + alpha[i]*beta*Qout_CO[i+2][j]*((Qout_CO[i+1][j] + Qout_CO[i+1][j+1])/2)**(beta-1))/(delta_t/x[i] + alpha[i]*beta*((Qout_CO[i+2][j]+Qout_CO[i+1][j+1])/2)**(beta-1))
-        Qout_Chap[i+2][j+1]=Qout_Chap[i+2][j]+((Qout_Chap[i+1][j]-Qout_Chap[i+2][j])*(dt))/(x[i]*alpha[i]*beta*Qout_Chap[i+2][j]**(beta-1))
+        Qout_CO[j+1][i+2]=(delta_t/x[i]*Qout_CO[j+1][i+1] + alpha[i]*beta*Qout_CO[j][i+2]*((Qout_CO[j][i+1] + Qout_CO[j+1][i+1])/2)**(beta-1))/(delta_t/x[i] + alpha[i]*beta*((Qout_CO[j][i+2]+Qout_CO[j+1][i+1])/2)**(beta-1))
+        Qout_Chap[j+1][i+2]=Qout_Chap[j][i+2]+((Qout_Chap[j][i+1]-Qout_Chap[j][i+2])*(dt))/(x[i]*alpha[i]*beta*Qout_Chap[j][i+2]**(beta-1))
         init_time = this_time
     
     tt.append(dt)
 
 #%%     Plotting Code     #######   
 
-#plt.plot(Qout_CO[1], 'b', label='Boundary Flow')
-plt.plot(Qout_CO[2], 'c', label='FirstCO')
-plt.plot(Qout_Chap[2], 'g', label='FirstChap')
+plt.plot(Qout_CO[:,1], 'b', label='Boundary Flow')
+plt.plot(Qout_CO[:,2], 'c', label='FirstCO')
+plt.plot(Qout_Chap[:,2], 'g', label='FirstChap')
 #plt.plot(Qout_CO[4], 'r', label='Third')
 #plt.plot(Qout_CO[5], 'k', label='Fourth')
 plt.ylabel('Flow')
