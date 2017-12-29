@@ -20,8 +20,8 @@ x=model_segs.length
 n=model_segs.mannings_n
 s=model_segs.chan_slope
 w=model_segs.bot_width
-delta_t=360
-end_time=514000#8514000
+delta_t=60
+end_time=86400#8514000
 model_segs.insert(loc= 7,column='Perimeter',value=0)#allow_duplicates=True
 
 #model_segs['alpha'] = ((model_segs.mannings_n*model_segs.bot_width**(2/3))/model_segs.chan_slope**0.5)**beta
@@ -33,20 +33,21 @@ Qboun2d=(1-np.cos((time2d*np.pi)/450))*(750/np.pi)+200
 Qx=np.zeros((len(time2d),len(x)+2),dtype=float) 
 Qx[0,:]=[0.001]*(len(x)+2)              #initial flow conditions of 0.001 m3/s
 Qout=np.concatenate((time2d[:,None],Qboun2d[:,None],Qx), axis=1)
-alpha_data=pd.DataFrame(np.zeros(((len(time2d)-1), x.count()-1)))
+alpha_data=pd.DataFrame(np.zeros(((len(time2d)*x.count()), x.count()-1)))
 alpha_data.columns =['alpha', 'area', 'depth', 'velocity', 'width']
-tt=[]
 
+##need to make the depth column in alpha_data be the initial depth. 
+alpha_data.loc[0:6,'depth']=model_segs['initial_depth']
 ##Channel Geometry 
 beta=3/5
 z=2 #assuming trapezoid and triangle have a side slope of 1/2
 for j in range(len(model_segs['chan_geom'])):
     if model_segs['chan_geom'][j] =='tz':#for trapezoid
-        model_segs['Perimeter'][j]=w[j]+2*model_segs['initial_depth'][j]*(1+z**2)**0.5
+        model_segs['Perimeter'][j]=w[j]+2*alpha_data['depth'][j]*(1+z**2)**0.5    #this may not be calculating correctly
     elif model_segs['chan_geom'][j] =='r':#for rectangle
-        model_segs['Perimeter'][j]=2*model_segs['initial_depth'][j]+w[j]
+        model_segs['Perimeter'][j]=2*alpha_data['depth'][j]+w[j]
     elif  model_segs['chan_geom'][j] =='t':#for triangle
-        model_segs['Perimeter'][j]=2*model_segs['initial_depth'][j]*(1+z**2)**0.5
+        model_segs['Perimeter'][j]=2*alpha_data['depth'][j]*(1+z**2)**0.5
 #print(model_segs.Perimeter)
 
 
@@ -54,7 +55,7 @@ for j in range(len(model_segs['chan_geom'])):
 f = 0
 for t in range(len(time2d)-1):
     
-    for i in range(x.count()-1):
+    for i in range(x.count()):
         #model_segs['chan_geom'][i]
         alpha=((n[i]/s[i]**0.5)*(model_segs['Perimeter'][i])**(2/3))**beta
         Qout[t+1][i+2]=Qout[t][i+2]+((Qout[t][i+1]-Qout[t][i+2])*(delta_t))/(x[i]*alpha*beta*Qout[t][i+2]**(beta-1))
@@ -65,8 +66,8 @@ for t in range(len(time2d)-1):
         alpha_data['velocity'][i+f]=Qout[t+1][i+2]/alpha_data['area'][i+f]
         alpha_data['width'][i+f]=w[i]
         
-    f = f + 4
-print(alpha_data)
+    f = f + x.count()
+print(alpha_data[8600:]) # shows zeros for the last time step
 alpha_data.shape
 #%%
 ##Plotting Code##
@@ -79,30 +80,12 @@ plt.plot(Qout[:100,0],Qout[:100,5], 'k', label='Fourth')
 plt.ylabel('Flow')
 
 #plt.axis([0,200,2000,2500])
-#plt.legend() 
+plt.legend() 
                 
-#%%
-initial_depth=2 #meters initial depth
-beta=3/5
-z=2 #slope of 0.5
 
-Perimeter=w+2*initial_depth #square
-alpha1=((n/s**0.5)*(Perimeter)**(2/3))**beta
-area=alpha1*Qout[t+1][i+2]**beta
 
 #print(np.subtract(Qout[4][2],Qout[4][8])) #using numpy functions is faster than python functions
 
 
-shape=['trapezoid', 'rectangle','triangle']
-for i in shape:
-    if shape=='trapezoid':
-        Perimeter=w+2*initial_depth*(1+z**2)**0.5
-    elif shape=='rectangle':
-        Perimeter=2*initial_depth+w
-    elif shape=='triangle':
-        Perimeter=2*initial_depth*(1+z**2)
-    alpha1=((n/s**0.5)*(Perimeter)**(2/3))**beta
-print(alpha1)
 
 
-### Can I create a dataFrame column and use a locator at the same time?
