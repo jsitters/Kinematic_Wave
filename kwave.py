@@ -30,15 +30,14 @@ n=model_segs.mannings_n
 slope=model_segs.chan_slope
 w=model_segs.bot_width
 delta_t=60
-end_time=86400#8514000
+end_time=600#8514000
 model_segs.insert(loc= 7,column='Perimeter',value=0)#allow_duplicates=True
 
-#model_segs['alpha'] = ((model_segs.mannings_n*model_segs.bot_width**(2/3))/model_segs.chan_slope**0.5)**beta
 
 ##setup dataframes
 
 time2d=(np.arange(0,end_time,delta_t))
-Qboun2d=time2d#(1-np.cos((time2d*np.pi)/450))*(750/np.pi)+200 
+Qboun2d=time2d+200#(1-np.cos((time2d*np.pi)/450))*(750/np.pi)+200 #time2d
 Qx=np.zeros((len(time2d),len(length)+1),dtype=float) 
 Qx[0,:]=[0.001]*(len(length)+1)              #initial flow conditions of 0.001 m3/s
 Qout=np.concatenate((Qboun2d[:,None],Qx), axis=1)
@@ -68,33 +67,35 @@ z=2 #assuming trapezoid and triangle have a side slope of 1/2
 
 ##Time and Space Flow Loop####
 
+
 for t in range(len(time2d)-1): 
 
     for i in range(length.count()):
-        #model_segs['Perimeter'][i]=perimeter_calc(model_segs['chan_geom'][i],depth_data.iloc[t][i], model_segs['bot_width'][i], z)
-        #model_segs['chan_geom'][i]
-        Perimeter=2*depth_data.iloc[t+1,i]+model_segs['bot_width'][i] #model_segs['Perimeter'][i]
-        alpha=((n[i]/slope[i]**0.5)*(Perimeter**(2/3)))**beta
-        Qout[t+1][i+1]=Qout[t][i+1]+((Qout[t][i+1]-Qout[t][i+1])*(delta_t))/(length[i]*alpha*beta*Qout[t][i+1]**(beta-1))
+        p_calc=perimeter_calc(model_segs['chan_geom'][i],depth_data.iloc[t,i], model_segs['bot_width'][i], z)
+        
+        #Perimeter=2*depth_data.iloc[t,i]+model_segs['bot_width'][i] #model_segs['Perimeter'][i]
+        alpha_data.iloc[t,i]=((n[i]/slope[i]**0.5)*(p_calc**(2/3)))**beta
+        Qout[t+1][i+1]=Qout[t][i+1]+((Qout[t][i]-Qout[t][i+1])*(delta_t))/(length[i]*alpha_data.iloc[t,i]*beta*Qout[t][i+1]**(beta-1))
 
-        area.iloc[t,i]=alpha*(Qout[t+1][i+1])**beta
-        depth_data.iloc[t,i]=area.iloc[t,i]/w[i]
-        alpha_data.iloc[t,i]=alpha
+        area.iloc[t,i]=alpha_data.iloc[t,i]*(Qout[t+1][i+1])**beta
+        depth_data.iloc[t+1,i]=area.iloc[t,i]/w[i]
+        #alpha_data.iloc[t,i]=alpha
         velocity.iloc[t,i]=Qout[t+1][i+1]/area.iloc[t,i]
-        #alpha_data['width'][i]=w[i]
         
-        
+print(alpha_data.head(n=6))
+print(depth_data.head(n=6))
+print(area.head(n=6))        
     
-print(alpha_data[0:15]) # shows zeros for the last time step
-alpha_data.shape
+#print(alpha_data[0:15]) # shows zeros for the last time step
+
 #%%
 ##Plotting Code##
 
-plt.plot(time2d,Qout[:100,1], 'b', label='Boundary Flow')
-plt.plot(time2d,Qout[:100,2], 'c', label='First')
-plt.plot(time2d,Qout[:100,3], 'g', label='Second')
-plt.plot(time2d,Qout[:100,4], 'r', label='Third')
-plt.plot(time2d,Qout[:100,5], 'k', label='Fourth')
+plt.plot(time2d,Qout[:100,0], 'b', label='Boundary Flow')
+plt.plot(time2d,Qout[:100,1], 'c', label='First')
+plt.plot(time2d,Qout[:100,2], 'g', label='Second')
+plt.plot(time2d,Qout[:100,3], 'r', label='Third')
+plt.plot(time2d,Qout[:100,4], 'k', label='Fourth')
 plt.ylabel('Flow')
 
 #plt.axis([0,200,2000,2500])
