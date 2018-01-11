@@ -27,21 +27,21 @@ w=model_segs.bot_width
 beta=3/5
 alpha=((n*w**(2/3))/s**0.5)**beta
 delta_t=60 #seconds
-end_time=43320
+end_time=1920
 
 #setup
 
 
-time2d=(np.arange(0,end_time,delta_t))
-#np.full((len(time2d)),5)
-Qboun2d=(1-np.cos((time2d*np.pi)/450))*(750/np.pi)+2 #np.atleast_2d
-Qx=np.ones((len(time2d),len(x)),dtype=float) 
-Qout_CO=np.concatenate((time2d[:,None],Qboun2d[:,None],Qx), axis=1)
-Qout_Chap=np.concatenate((time2d[:,None],Qboun2d[:,None],Qx), axis=1)
+time=(np.arange(0,end_time,delta_t))
+#np.full((len(time)),5)
+Qbound=(500*np.cos((time/3600)*2*np.pi-0.5*np.pi)) #np.atleast_2d
+Qx=np.ones((len(time),len(x)),dtype=float) 
+Qout_CO=np.concatenate((time[:,None],Qbound[:,None],Qx), axis=1)
+Qout_Chap=np.concatenate((time[:,None],Qbound[:,None],Qx), axis=1)
 Qout_Chap[0,2:]=0.001*len(x)
 Qout_CO[0,2:]=0.001*len(x)
 
-for t in range(len(time2d)-1):
+for t in range(len(time)-1):
    
     for i in range(x.count()):
         
@@ -53,79 +53,107 @@ for t in range(len(time2d)-1):
 
 os.getcwd()
 os.chdir('C:/Users/jsitters/WASP/K_wave_Trial/')
-WASP_Output = pd.read_table('sine_Flow.txt', sep="\t", header=0) #this is not right... needs work on segment location
+WASP_Output = pd.read_table('minute_trial.txt', sep="\t", header=0) #this is not right... needs work on segment location
 WASP_df = pd.DataFrame(WASP_Output)  
 wasptime=WASP_df.iloc[:,1]
-WASP_df.head
 
-wasptime.head
 #%%     Plotting Code     #######   
 plt.figure(1)
-#plt.plot(time2d/delta_t,Qout_CO[:,1], 'b', label='Boundary Flow')
-plt.plot(time2d/delta_t,WASP_df.iloc[:,2], 'r', label ='WASP_seg1')
-plt.plot(time2d/delta_t,Qout_CO[:,2], 'c', label='CO_seg1')
-plt.plot(time2d/delta_t,Qout_Chap[:,2], 'g', label='Chap_seg1')
+plt.subplot(611)
+#plt.plot(time/delta_t,Qout_CO[:,1], 'b', label='Boundary Flow')
+plt.plot(time/60,WASP_df.iloc[:,1], 'r', label ='WASP_seg1')
+plt.plot(time/60,Qout_CO[:,2], 'c', label='CO_seg1')
+plt.plot(time/60,Qout_Chap[:,2], 'g', label='Chap_seg1')
 plt.ylabel('Flow')
 plt.xlabel('Time (min)')
 plt.title('Kwave Comparison')
 plt.legend(loc='lower right')
 #plt.axis([0,150,0,5.5])
 
-plt.figure(2)
-plt.plot(wasptime,WASP_df.iloc[:,3], 'r', label ='WASP_seg2')
-plt.plot(time2d/delta_t,Qout_CO[:,3], 'c', label='CO_seg2')
-plt.plot(time2d/delta_t,Qout_Chap[:,3], 'g', label='Chap_seg2')
+plt.subplot(612)
+plt.plot(time/60,WASP_df.iloc[:,2], 'r', label ='WASP_seg2')
+plt.plot(time/delta_t,Qout_CO[:,3], 'c', label='CO_seg2')
+plt.plot(time/delta_t,Qout_Chap[:,3], 'g', label='Chap_seg2')
 plt.ylabel('Flow')
 plt.xlabel('Time (min)')
-plt.title('Kwave Comparison')
+#plt.title('Kwave Comparison')
 plt.legend(loc='lower right')
-plt.axis([0,150,0,5.5])
+#plt.axis([0,150,0,5.5])
 
-plt.figure(3)
-plt.plot(wasptime,WASP_df.iloc[:,4], 'r', label ='WASP_seg3')
-plt.plot(time2d/delta_t,Qout_CO[:,4], 'c', label='CO_seg3')
+plt.subplot(613)
+plt.plot(time/60,WASP_df.iloc[:,3], 'r', label ='WASP_seg3')
+plt.plot(time/delta_t,Qout_CO[:,4], 'c', label='CO_seg3')
 
-plt.plot(time2d/delta_t,Qout_Chap[:,4], 'g', label='Chap_seg3')
+plt.plot(time/delta_t,Qout_Chap[:,4], 'g', label='Chap_seg3')
 plt.ylabel('Flow')
 plt.xlabel('Time (min)')
-plt.title('Kwave Comparison')
+#plt.title('Kwave Comparison')
 plt.legend(loc='lower right')
-plt.axis([0,150,0,5.5])
+#plt.axis([0,150,0,5.5])
 
-plt.figure(4)
-plt.plot(wasptime,WASP_df.iloc[:,5], 'r', label ='WASP_seg4')
-plt.plot(time2d/delta_t,Qout_CO[:,5], 'c', label='CO_seg4')
-plt.plot(time2d/delta_t,Qout_Chap[:,5], 'g', label='Chap_seg4')
+plt.subplot(614)
+plt.plot(time/60,WASP_df.iloc[:,4], 'r', label ='WASP_seg4')
+plt.plot(time/delta_t,Qout_CO[:,5], 'c', label='CO_seg4')
+plt.plot(time/delta_t,Qout_Chap[:,5], 'g', label='Chap_seg4')
 plt.ylabel('Flow')
 plt.xlabel('Time (min)')
-plt.title('Kwave Comparison')
+#plt.title('Kwave Comparison')
 plt.legend(loc='lower right')
-plt.axis([0,150,0,5.5])
+#plt.axis([0,150,0,5.5])
 
-plt.figure(5)
-plt.plot(wasptime,WASP_df.iloc[:,6], 'r', label ='WASP_seg5')
-plt.plot(time2d/delta_t,Qout_CO[:,6], 'c', label='CO_seg5')
-plt.plot(time2d/delta_t,Qout_Chap[:,6], 'g', label='Chap_seg5')
+plt.subplot(615)
+plt.plot(time/60,WASP_df.iloc[:,5], 'r', label ='WASP_seg5')
+plt.plot(time/delta_t,Qout_CO[:,6], 'c', label='CO_seg5')
+plt.plot(time/delta_t,Qout_Chap[:,6], 'g', label='Chap_seg5')
 plt.ylabel('Flow')
 plt.xlabel('Time (min)')
-plt.title('Kwave Comparison')
+#plt.title('Kwave Comparison')
 plt.legend(loc='lower right')
-plt.axis([0,150,0,5.5])
+#plt.axis([0,150,0,5.5])
 
-plt.figure(6)
-plt.plot(wasptime,WASP_df.iloc[:,7], 'r', label ='WASP_seg6')
-plt.plot(time2d/delta_t,Qout_CO[:,7], 'c', label='CO_seg6')
-plt.plot(time2d/delta_t,Qout_Chap[:,7], 'g', label='Chap_seg6')
+plt.subplot(616)
+plt.plot(time/60,WASP_df.iloc[:,6], 'r', label ='WASP_seg6')
+plt.plot(time/delta_t,Qout_CO[:,7], 'c', label='CO_seg6')
+plt.plot(time/delta_t,Qout_Chap[:,7], 'g', label='Chap_seg6')
 
 plt.ylabel('Flow')
 plt.xlabel('Time (min)')
-plt.title('Kwave Comparison')
+#plt.title('Kwave Comparison')
 plt.legend(loc='lower right')
-plt.axis([0,150,0,5.5])
+#plt.axis([0,150,0,5.5])
 
 plt.tight_layout()
 
 #%%
-plt.plot(wasptime,WASP_df.iloc[:,3], 'r', label ='WASP_seg6')
-plt.plot(time2d/delta_t,Qout_CO[:,4], 'c', label='CO_seg6')
-plt.axis([0,60,0,5.5])
+fig,ax =plt.subplots(6, sharex=True, sharey=True)
+ax[0].plot(time/60,WASP_df.iloc[:,1], 'r', label ='WASP_seg1')
+ax[0].plot(time/60,Qout_CO[:,2], 'c', label='CO_seg1')
+ax[0].plot(time/60,Qout_Chap[:,2], 'b', label='Chap_seg1')
+
+ax[1].plot(time/60,WASP_df.iloc[:,2], 'r', label ='WASP_seg2')
+ax[1].plot(time/60,Qout_CO[:,3], 'c', label='CO_seg2')
+ax[1].plot(time/60,Qout_Chap[:,3], 'b', label='Chap_seg2')
+
+ax[2].plot(time/60,WASP_df.iloc[:,3], 'r', label ='WASP_seg3')
+ax[2].plot(time/60,Qout_CO[:,4], 'c', label='CO_seg3')
+ax[2].plot(time/60,Qout_Chap[:,4], 'b', label='Chap_seg3')
+
+ax[3].plot(time/60,WASP_df.iloc[:,4], 'r', label ='WASP_seg4')
+ax[3].plot(time/60,Qout_CO[:,5], 'c', label='CO_seg4')
+ax[3].plot(time/60,Qout_Chap[:,5], 'b', label='Chap_seg4')
+
+ax[4].plot(time/60,WASP_df.iloc[:,5], 'r', label ='WASP_seg5')
+ax[4].plot(time/60,Qout_CO[:,6], 'c', label='CO_seg5')
+ax[4].plot(time/60,Qout_Chap[:,6], 'b', label='Chap_seg5')
+
+ax[5].plot(time/60,WASP_df.iloc[:,6], 'r', label ='WASP_seg6')
+ax[5].plot(time/60,Qout_CO[:,7], 'c', label='CO_seg6')
+ax[5].plot(time/60,Qout_Chap[:,7], 'b', label='Chap_seg6')
+
+fig.suptitle('Kinematic Wave Comparison')
+plt.legend(loc='center left')#, bbox_to_anchor=(1, 0.5))
+plt.ylabel('Flow (m3/s)')#, horizontalalignment='right')
+plt.xlabel('Time (min)')
+
+#plt.savefig('Kinematic_Compare.png')
+
