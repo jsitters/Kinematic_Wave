@@ -18,6 +18,15 @@ def perimeter_calc(shape, d, wide, z_slope):
         perim=2 *d*(1 + z_slope**2)**0.5
     return perim
 
+def depth_calc (shape, area, wide, z):
+    if shape =='r':#for rectangle
+        depth=area/wide
+    elif shape =='tz':#for trapezoidshape =='tz':#for trapezoid
+        depth=(-wide+np.sqrt((wide**2)-4*z*area))/2*wide
+    elif shape =='t': #for triangle
+        depth == np.sqrt(area/z)
+    return depth
+
 #state Variables
 beta=3/5
 delta_t=3600/2
@@ -69,6 +78,8 @@ HP_vol['flow_in']=[200]*10 + [10]*10 + [50]*10 + [100]*(len(time_s)-30)
 
 ##Loop through segments to calculate outflow and hydro parameters for each time step
 b=0
+#t=11
+#i=1
 for t in range(len(time_s)): 
     for i in range(nsegments):
         p_calc=perimeter_calc(model_segs['ChanGeom'][i],HP_depth.iloc[t,i+2], model_segs['bot_width'][i], model_segs['z_slope'][i])
@@ -77,15 +88,29 @@ for t in range(len(time_s)):
         Q_hat = Qout.iloc[t, i+2]
         #Qout.iloc[t+1, i+2]= Qout.iloc[t, i+2]+((Qout.iloc[t, i+1]-Qout.iloc[t, i+2])*(delta_t))/(model_segs['length'][i]*alpha_data.iloc[t,i]*beta*Qout.iloc[t, i+2]**(beta-1))
         Qout.iloc[t+1, i+2] = Qout.iloc[t, i+2] + ((Qout.iloc[t+1, i+1] - Qout.iloc[t, i+2])*(delta_t))/(model_segs['length'][i]*alpha_data.iloc[t, i]*beta*Q_hat**(beta-1))
-        while Q_hat - Qout.iloc[t+1, i+2] > 1e-3:  # implicit soln for Qout.iloc[t+1, i+2]
+        while abs((Q_hat - Qout.iloc[t+1, i+2])/Q_hat) > 1e-3:  # implicit soln for Qout.iloc[t+1, i+2]
             Q_hat = Qout.iloc[t+1, i+2]
             Qout.iloc[t+1, i+2] = Qout.iloc[t, i+2] + ((Qout.iloc[t+1, i+1] - Qout.iloc[t, i+2])*(delta_t))/(model_segs['length'][i]*alpha_data.iloc[t, i]*beta*Q_hat**(beta-1))
+            
             b = b + 1
             print(b)
         #else Q_hat - Qout.iloc[t+1, i+2] <= 1e-3:
             #Qout.iloc[t+1, i+2] = Qout.iloc[t, i+2] + ((Qout.iloc[t+1, i+1] - Qout.iloc[t, i+2])*(delta_t))/(model_segs['length'][i]*alpha_data.iloc[t, i]*beta*Q_hat**(beta-1))
         HP_area.iloc[t,i+2]=alpha_data.iloc[t,i]*(Qout.iloc[t+1 , i+2])**beta
-        HP_depth.iloc[t+1,i+2]=HP_area.iloc[t,i+2]/model_segs['bot_width'][i]
+        HP_depth.iloc[t+1,i+2]=depth_calc(model_segs['ChanGeom'][i], HP_area.iloc[t,i+2],model_segs['bot_width'][i], model_segs['z_slope'][i])
+        
+        #recalculating alpha ising new depth
+        p_calc2=perimeter_calc(model_segs['ChanGeom'][i],HP_depth.iloc[t+1,i+2], model_segs['bot_width'][i], model_segs['z_slope'][i])
+        alpha_star=((model_segs['mannings_n'][i]/model_segs['chan_slope'][i]**0.5)*(p_calc2**(2/3)))**beta
+        while abs((alpha_star-alpha_data.iloc[t,i])/alpha_data.iloc[t,i]) > 1e-3:
+            print ('alpha error')
+            alpha_data.iloc[t,i]=alpha_star
+            HP_area.iloc[t,i+2]=alpha_data.iloc[t,i]*(Qout.iloc[t+1 , i+2])**beta
+            HP_depth.iloc[t+1,i+2]=depth_calc(model_segs['ChanGeom'][i], HP_area.iloc[t,i+2],model_segs['bot_width'][i], model_segs['z_slope'][i])
+           
+            alpha_star=((model_segs['mannings_n'][i]/model_segs['chan_slope'][i]**0.5)*(p_calc2**(2/3)))**beta
+                       
+                       
         HP_velocity.iloc[t,i+2]=Qout.iloc[t+1 , i+2]/HP_area.iloc[t,i+2]
         HP_vol.iloc[t,i+2]=model_segs['length'][i]*HP_area.iloc[t,i+2]
      
